@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#   More complete information on how to fill out
+#       this Config file can be found at:
+#       https://github.com/MorrellLAB/FreeSNPCalls/wiki/Configuration
+
+#   Where are we storing the output files?
+#       Final directory is ${OUT_DIR}/Name_of_Caller
+OUT_DIR=
+
+#   Name this project
+PROJECT=
+
+#   What email should we use for job notifications?
+EMAIL=user@example.com
+
+#   What reference genome are we using?
+#       Include the full file path.
+REF_GEN=
+
+############################################
+##########      Dependencies      ##########
+############################################
+
+#   Please visit https://github.com/MorrellLab/FreeSNPCalls/wiki/Dependencies
+#       for information on version requirements and compatibility
+
+#   Do we have GNU parallel installed
+module load parallel
+
+#   Do we have freebayes installed?
+#   If you don't already have access to Paul's modules, 
+#       run the following command on login, then log into lab
+#echo export MODULEPATH=/panfs/roc/groups/9/morrellp/public/Modules:'$MODULEPATH' >> ~/.bash_profile
+module load freebayes/1.1.0
+
+############################################
+##########       SNP_Calling      ##########
+############################################
+
+#   What are the QSub settings for SNP_Calling?
+#       Below are the recommended settings
+SNP_QSUB="mem=8gb,nodes=1:ppn=8,walltime=24:00:00"
+
+#   Where is the list of sample filepaths?
+#       This can be generated with sample_list_generator.sh
+SNP_CALLING_SAMPLE_LIST=
