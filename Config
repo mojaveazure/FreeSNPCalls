@@ -18,6 +18,12 @@ EMAIL=user@example.com
 #       Include the full file path.
 REF_GEN=
 
+#   Date will be formatted and written into the VCF file name
+YMD=`date +%Y-%m-%d`
+
+#   Portion of the genome in the current analysis
+REGION=
+
 ############################################
 ##########      Dependencies      ##########
 ############################################
@@ -45,3 +51,7 @@ SNP_QSUB="mem=8gb,nodes=1:ppn=8,walltime=24:00:00"
 #   Where is the list of sample filepaths?
 #       This can be generated with sample_list_generator.sh
 SNP_CALLING_SAMPLE_LIST=
+
+#   Theta = 4Neu / bp, or average pairwise diversity across all sites
+#   Value is organism specific, wild barley ~0.01, cultivated barley ~0.008, soybean ~0.001
+THETA=

@@ -9,16 +9,29 @@ set -o pipefail
 #   What are the dependencies for Adapter_Trimming?
 declare -a SNP_Calling_Dependencies=(parallel freebayes)
 
+#   Need to add the upstream realignment along these lines!
+#   See lines 10 - 15 of https://github.com/ekg/freebayes/blob/master/examples/pipeline.sh
+#   Don't forget to honor Beau with some time statements
+#   bamtools merge -in /panfs/roc/groups/9/morrellp/shared/Projects/WBDC_inversions/sequence_handling/WBDC_125bp/SAM_Processing/SAMtools/Finished/WBDC_007_finished.bam -in /panfs/roc/groups/9/morrellp/shared/Projects/WBDC_inversions/sequence_handling/WBDC_125bp/SAM_Processing/SAMtools/Finished/WBDC_012_finished.bam -region chr2H:652030648-652032705 | ogap -f /panfs/roc/groups/9/morrellp/shared/References/Reference_Sequences/Barley/Morex/barley_RefSeq_v1.0/150831_barley_pseudomolecules.fasta | samtools view -h - | less
+
 # A function to do the SNP Calling
 function SNP_Calling() {
     local sample="$1"
-    local out="$2"
+#    local out="$2"
     local ref="$3"
-    local samplename=$(basename ${sample} .bam)
-    freebayes -f "${ref}" "${sample}" > "${out}"/"${samplename}".vcf
+
+    #    create directories for output
+    mkdir -p "${OUT_DIR}"  
+    #local samplename=$(basename ${sample}.bam)
+    freebayes -f "${ref}" \
+    #    list of BAM files
+    --bam-list "${sample}" \
+    #    Region is portion of the genome run in an individual analysis
+    #    Is taken from the Config file, will be included in VCF file name
+    --region "${REGION}" \
     #    pairwise nucleotide diversity (pi/bp), 0.008 for wild barley, for example
     #    value set in config file
-    --theta $theta\
+    --theta "${THETA}"\
     #     ploidy of either 1 or 2 for highly inbred samples of barley 
     --ploidy 1\
     #     includes reference allele in analysis as if another sample
@@ -36,11 +49,11 @@ function SNP_Calling() {
     #    don't assume Hardy Weinberg genotype frequencies; use for inbred samples!/qq
     --hwe-priors-off \
     #    next two lines break adjacent variants (SNPs) into individual SNPs
-    -- no-mnps \
+    --no-mnps \
     #    ignore complex events, composites of other classes of variants
     --no-complex \
     #    specify VCF output
-    --vcf "${out}"/"${samplename}".vcf
+    --vcf "${OUT_DIR}/${PROJECT}_${REGION}_${YMD}".vcf
 }
 
 #   Export the function
