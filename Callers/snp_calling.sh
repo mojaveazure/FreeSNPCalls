@@ -2,9 +2,20 @@
 
 #   This script calls SNPs on individual samples
 #   or a group of samples using freebayes.
+#   Piping among programs borrows directly from:
+#   https://github.com/ekg/freebayes/blob/master/examples/pipeline.sh
 
 set -e
 set -o pipefail
+
+#    Load modules used in this script
+#    The first three are from our local ~/shared/Software rather than MSI
+module load bamtools
+module load ogap
+module load bamleftalign
+module load freebayes
+module load samtools
+
 
 #   What are the dependencies for Adapter_Trimming?
 declare -a SNP_Calling_Dependencies=(parallel freebayes)
@@ -14,16 +25,27 @@ declare -a SNP_Calling_Dependencies=(parallel freebayes)
 #   Don't forget to honor Beau with some time statements
 #   bamtools merge -in /panfs/roc/groups/9/morrellp/shared/Projects/WBDC_inversions/sequence_handling/WBDC_125bp/SAM_Processing/SAMtools/Finished/WBDC_007_finished.bam -in /panfs/roc/groups/9/morrellp/shared/Projects/WBDC_inversions/sequence_handling/WBDC_125bp/SAM_Processing/SAMtools/Finished/WBDC_012_finished.bam -region chr2H:652030648-652032705 | ogap -f /panfs/roc/groups/9/morrellp/shared/References/Reference_Sequences/Barley/Morex/barley_RefSeq_v1.0/150831_barley_pseudomolecules.fasta | samtools view -h - | less
 
-# A function to do the SNP Calling
+#   A function to do the SNP Calling
+#   By adding all the items below we broke the function definition!
 function SNP_Calling() {
     local sample="$1"
+
 #    local out="$2"
-    local ref="$3"
+    local ref="$2"
 
     #    create directories for output
     mkdir -p "${OUT_DIR}"  
-    #local samplename=$(basename ${sample}.bam)
-    freebayes -f "${ref}" \
+
+
+time bamtools merge -region "${REGION}" \
+    $(for file in $(cat $sample); do echo " -in "$file; done) \
+        #    ogap is a re-aligner, need to define options used
+    |    time ogap -z -R 25 -C 20 -Q 20 -S 0 -f "${ref}" \
+    |    time bamleftalign -f "${ref}" \
+    |    time samtools calmd -EAru - "${ref}" 2>/dev/null \
+    |    time freebayes \
+
+    --fasta-reference "${ref}" \
     #    list of BAM files
     --bam-list "${sample}" \
     #    Region is portion of the genome run in an individual analysis
@@ -55,6 +77,7 @@ function SNP_Calling() {
     #    specify VCF output
     --vcf "${OUT_DIR}/${PROJECT}_${REGION}_${YMD}".vcf
 }
+
 
 #   Export the function
 export -f SNP_Calling
